@@ -1,0 +1,53 @@
+pipeline {
+    agent any
+    tools { nodejs 'node' }
+    stages {
+        stage('Cloning Repo') {
+            steps {
+                script {
+                    git branch: 'main',
+                    url: 'https://github.com/FischerNils06/M324_Trafficlight_sourcecode.git'
+                }
+            }
+        }
+        stage ('Build Image') {
+            steps {
+                script {
+                    sh "docker build -t trafficlight-image00 ."
+                }
+            }
+        }
+        stage ('Run Container') {
+            steps {
+                script {
+                    sh "docker run -d -p 8088:8080 --name trafficlight-container00 trafficlight-image00:latest"
+                }
+            }
+        }
+        stage ('Test Container') {
+            steps {
+                script {
+                    dir('dev') { // Navigieren Sie in das dev-Verzeichnis, wenn dort die package.json liegt
+                        sh "docker exec trafficlight-container00 npm run test"
+                    }
+                }
+            }
+        }
+        stage ('Delete Container') {
+            steps {
+                script {
+                    sh "docker stop trafficlight-container00"
+                    sh "docker rm trafficlight-container00"
+                }
+            }
+        }
+        stage ('Delete Image') {
+            steps {
+                script {
+                    sh "docker rmi trafficlight-image00"
+                    
+                }
+            }
+        }
+    }
+}
